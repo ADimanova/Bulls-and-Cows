@@ -1,0 +1,73 @@
+/*Created by Administrator on 19/07/2014.*/
+/// <reference path="libs/require.js" />
+(function () {
+    'use strict';
+    require(['engine', 'score-functions'], function (GameEngine, scoreList) {
+        var startGameButton = document.querySelector('#start-game-btn');
+        var display = document.querySelector('#display');
+        startGameButton.addEventListener('click', startGame);
+        var checkButton = document.querySelector('#check-btn');
+        var scoreHolder = document.querySelector('#score');
+        startGameButton.click();
+
+        function startGame() {
+            var looping;
+            var gameEngine = new GameEngine();
+            var result = 100;
+            scoreHolder.innerText = 'Your score: ' + result;
+
+            var hiddenNumber = gameEngine.getHiddenNumber();
+            looping = gameLoop.bind(null, hiddenNumber);
+            checkButton.onclick = looping;
+
+            display.innerText = 'Welcome! You have started a new game. Try to guess the number and enter it below. When done press the button "Check Number".';
+
+            function gameLoop(hiddenNumber) {
+                var gameWon = false;
+                var playerNumber = gameEngine.getPlayerNumber();
+                if (playerNumber === -1) {
+                    display.innerText = 'Please enter a four digit number with no repeating digits to play.';
+                    return;
+                }
+
+                //for testing purposes
+                console.log(hiddenNumber);
+                console.log(playerNumber);
+
+                var bullsAndCows = gameEngine.compareNumbers(hiddenNumber, playerNumber);
+
+                if (bullsAndCows.bulls === 4) {
+                    gameWon = true;
+                }
+
+                if (gameWon) {
+                    display.innerHTML = 'Congrats! You got it. The number it ' + hiddenNumber.join('') + '.';
+                    display.innerHTML += '</br>Please enter your username in the input field below.';
+
+                    checkButton.innerText = 'Set Username';
+                    checkButton.onclick = function () {
+                        var listing = scoreList.getLocalStorageList();
+                        gameEngine.enterPlayerInScoreList(listing, result);
+                        scoreList.setLocalStorageList(listing);
+                        listing = scoreList.getLocalStorageList();
+                        displayScores(listing);
+                        checkButton.innerText = 'Check Number';
+                    };
+                }
+                else {
+                    display.innerText = 'You got ' + bullsAndCows.bulls + ' bulls and ' + bullsAndCows.cows + ' cows right.';
+                    result -= 10;
+                    scoreHolder.innerText = 'Your score: ' + result;
+                }
+
+                function displayScores(scores) {
+                    display.innerHTML = '---High Scores---<br/>';
+                    for (var i = 0, len = scores.length; i < len; i += 1) {
+                        display.innerHTML += scores[i].name + ": " + scores[i].score + '<br/>';
+                    }
+                }
+            }
+        }
+
+    });
+}());
